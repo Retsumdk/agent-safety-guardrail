@@ -1,0 +1,14 @@
+{
+  "name": "agent-safety-guardrail",
+  "description": "Safety enforcement layer for AI agents with runtime constraint validation, circuit breakers, and policy-based gating on tool execution",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "build": "tsc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "bun-types": "^1.0.0"
+  }
+}
