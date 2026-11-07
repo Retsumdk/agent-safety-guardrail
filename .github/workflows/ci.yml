@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bunx tsc -p tsconfig.tests.json
+      - run: bun test
+      - name: demo output is deterministic
+        run: bun src/demo.ts > /tmp/demo-actual.txt && diff -u demo-output.txt /tmp/demo-actual.txt
+      - name: build emits dist
+        run: bunx tsc && test -f dist/cli-main.js
+
+  node-install:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install from GitHub and exercise the library
+        run: |
+          cd "$(mktemp -d)"
+          npm init -y >/dev/null 2>&1
+          npm install github:Retsumdk/agent-safety-guardrail >/dev/null
+          node --input-type=module -e '
+            import { Guardrail, JournalStore } from "agent-safety-guardrail";
+            const journal = new JournalStore(null);
+            const guard = new Guardrail({ journal });
+            guard.register("calc", {
+              policy: { required: ["expr"], types: [{ key: "expr", type: "string" }], forbiddenPatterns: ["[_a-zA-Z]"] },
+              executor: (args) => ({ echoed: args }),
+              label: "probe",
+            });
+            const denied = guard.evaluate("calc", { expr: "process.exit(1)" });
+            if (denied.status !== "deny") throw new Error("policy gate failed to deny");
+            const ok = await guard.execute("calc", { expr: "2+2" });
+            if (ok.status !== "ok") throw new Error("execute failed");
+            const verdict = guard.verify();
+            if (!verdict.ok || verdict.records !== 3) throw new Error("verify failed");
+            console.log("GH_INSTALL_OK", denied.reason, verdict.records);
+          '

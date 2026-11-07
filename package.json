@@ -1,14 +1,64 @@
 {
   "name": "agent-safety-guardrail",
-  "description": "Safety enforcement layer for AI agents with runtime constraint validation, circuit breakers, and policy-based gating on tool execution",
   "version": "1.0.0",
+  "description": "Safety enforcement layer for AI agents: policy-gated tool execution, circuit breakers, rate limits, and a tamper-evident audit journal",
   "type": "module",
-  "scripts": {
-    "test": "bun test",
-    "build": "tsc"
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./engine": {
+      "types": "./dist/guardrail.d.ts",
+      "default": "./dist/guardrail.js"
+    }
   },
-  "dependencies": {},
+  "bin": {
+    "asg": "./dist/cli-main.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "demo-output.txt"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "test": "bun test",
+    "typecheck": "tsc -p tsconfig.tests.json",
+    "demo": "bun src/demo.ts",
+    "verify:demo": "bun src/demo.ts > /tmp/asg-demo-got.txt && diff -u demo-output.txt /tmp/asg-demo-got.txt"
+  },
+  "keywords": [
+    "agent",
+    "ai-agents",
+    "audit-trail",
+    "autonomous-agents",
+    "circuit-breaker",
+    "guardrails",
+    "policy-engine",
+    "safety",
+    "tool-execution",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Retsumdk/agent-safety-guardrail.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Retsumdk/agent-safety-guardrail/issues"
+  },
+  "homepage": "https://github.com/Retsumdk/agent-safety-guardrail#readme",
   "devDependencies": {
-    "bun-types": "^1.0.0"
+    "@types/node": "^22.10.2",
+    "bun-types": "^1.1.34",
+    "typescript": "^5.7.2"
   }
 }

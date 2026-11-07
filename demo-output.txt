@@ -1,0 +1,55 @@
+asg demo — safety enforcement layer for AI agents
+clock frozen at 2026-01-01T00:00:00.000Z (ms 1767225600000)
+
+[1] policy gate allows a well-formed call
+ALLOW calc [policy_pass] all policy checks passed
+RESULT {"expr":"(2+3)*4","value":20}
+
+[2] policy gate denies malformed and dangerous calls
+DENY calc [required:expr] missing required argument "expr"
+DENY calc [forbidden_pattern:[_a-zA-Z]] argument value matches forbidden pattern /[_a-zA-Z]/
+DENY echo [allow_only:cmd] argument "cmd" is not in the allowOnly list
+
+[3] rate limiting (echo: 3 calls per 60000ms window — the 4th call is denied)
+ALLOW echo [policy_pass] all policy checks passed
+RESULT {"echoed":{"text":"first"}}
+ALLOW echo [policy_pass] all policy checks passed
+RESULT {"echoed":{"text":"second"}}
+ALLOW echo [policy_pass] all policy checks passed
+RESULT {"echoed":{"text":"third"}}
+DENY echo [rate_limited] rate limit reached: 3 calls per 60000ms window
+BLOCKED rate_limited: rate limit reached: 3 calls per 60000ms window
+
+[4] circuit breaker (flaky: opens after 2 consecutive failures, 5000ms cooldown)
+ALLOW flaky [policy_pass] all policy checks passed
+FAILED flaky failed on request
+ALLOW flaky [policy_pass] all policy checks passed
+FAILED flaky failed on request
+DENY flaky [circuit_open] circuit open for "flaky"; cooldown ends in 5000ms
+BLOCKED circuit_open: circuit open for "flaky"; cooldown ends in 5000ms
+  (clock advances 5000ms — cooldown elapses, one half-open probe allowed)
+ALLOW flaky [policy_pass] all policy checks passed
+RESULT {"ok":true,"fail":false}
+ALLOW flaky [policy_pass] all policy checks passed
+RESULT {"ok":true,"fail":false}
+
+[5] audit journal
+verify: ok — 27 records, hash chain intact
+
+[6] stats
+tools: 3
+gates: 8 allowed, 5 denied
+runs: 6 ok, 2 failed
+
+calc:
+  gates: 1 allowed, 2 denied (forbidden_pattern:[_a-zA-Z]:1 required:expr:1)
+  runs: 1 ok, 0 failed, avg latency 0ms
+  breaker: closed (consecutive failures 0)
+echo:
+  gates: 3 allowed, 2 denied (allow_only:cmd:1 rate_limited:1)
+  runs: 3 ok, 0 failed, avg latency 0ms
+  breaker: closed (consecutive failures 0)
+flaky:
+  gates: 4 allowed, 1 denied (circuit_open:1)
+  runs: 2 ok, 2 failed, avg latency 0ms
+  breaker: closed (consecutive failures 0)
