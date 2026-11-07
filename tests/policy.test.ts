@@ -38,11 +38,11 @@ describe("validatePolicy", () => {
     expect(() => policy({ maxCalls: 1.5 })).toThrow("maxCalls must be a positive integer");
     expect(() => policy({ windowMs: 0 })).toThrow("windowMs must be a positive number");
     expect(() => policy({ timeoutMs: -1 })).toThrow("timeoutMs must be a positive number");
-    expect(() => policy({ numbers: [{ key: "n", min: "x" }] })).toThrow("must be a number");
+    expect(() => policy({ numbers: [{ key: "n", min: "x" as unknown as number }] })).toThrow("must be a number");
   });
 
   test("rejects unknown type names", () => {
-    expect(() => policy({ types: [{ key: "a", type: "symbol" }] })).toThrow("unknown type");
+    expect(() => policy({ types: [{ key: "a", type: "symbol" as unknown as "string" }] })).toThrow("unknown type");
   });
 });
 
