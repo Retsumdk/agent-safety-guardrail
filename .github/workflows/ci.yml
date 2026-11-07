@@ -48,6 +48,6 @@ jobs:
             const ok = await guard.execute("calc", { expr: "2+2" });
             if (ok.status !== "ok") throw new Error("execute failed");
             const verdict = guard.verify();
-            if (!verdict.ok || verdict.records !== 3) throw new Error("verify failed");
+            if (!verdict.ok || verdict.records !== 4) throw new Error("verify failed");
             console.log("GH_INSTALL_OK", denied.reason, verdict.records);
           '
